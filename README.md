@@ -6,14 +6,6 @@ This application is meant to bean interactive tool for exploring 2D groundwater 
 
 This application has _not_ been thoroughly checked and is very likely to contain errors. That said, it appears to be making computations that are largely correct, based on visual inspections of the results.
 
-## GitHub Pages
-
-_From Copilot._
-
-One-time setup you need to do on GitHub: in the repo, go to Settings → Pages → Build and deployment → Source and choose GitHub Actions. Without this, the publish step will fail.
-
-After the first successful run on main, the app will be at https://<user-or-org>.github.io/CE173-experiments/ (or start.html). The exact address appears in the Actions run summary.
-
 ## My Prompts to GitHub Copilot
 
 _I asked GitHub Copilot to reproduce my prompts; the last prompt is the one that generated this section. The prompts listed here are what created the initial commit in this repository. The only file I edited was `README.md`---Copilot did the rest._
