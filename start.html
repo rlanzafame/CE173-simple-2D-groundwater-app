@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>2D Groundwater Diffusion Explorer</title>
+  <link rel="stylesheet" href="app/styles.css">
+</head>
+<body>
+  <header>
+    <h1>2D Transient Groundwater Flow &mdash; S<sub>s</sub>&thinsp;&part;h/&part;t = &part;/&part;x(K&thinsp;&part;h/&part;x) + &part;/&part;z(K&thinsp;&part;h/&part;z) + W</h1>
+    <nav class="tabs">
+      <button data-tab="domain" class="active">Domain</button>
+      <button data-tab="editor">Cells &amp; Boundaries</button>
+      <button data-tab="solution">Solution</button>
+      <button data-tab="docs">Documentation</button>
+    </nav>
+  </header>
+
+  <main>
+    <!-- Domain tab -->
+    <section id="tab-domain" class="tab active">
+      <div class="panel wide">
+        <h2>Domain &amp; grid</h2>
+        <div class="form">
+          <label for="d-Lx">Length in x, L<sub>x</sub> [L]</label><input id="d-Lx" data-help="Lx" type="number" step="any" min="0" value="100">
+          <label for="d-Lz">Depth in z, L<sub>z</sub> [L]</label><input id="d-Lz" data-help="Lz" type="number" step="any" min="0" value="50">
+          <label for="d-nx">Cells in x, n<sub>x</sub></label><input id="d-nx" data-help="nx" type="number" step="1" min="1" max="400" value="50">
+          <label for="d-nz">Cells in z, n<sub>z</sub></label><input id="d-nz" data-help="nz" type="number" step="1" min="1" max="400" value="25">
+        </div>
+        <h2>Default cell properties</h2>
+        <div class="form">
+          <label for="d-K">Hydraulic conductivity K [L/T]</label><input id="d-K" data-help="K" type="number" step="any" min="0" value="1">
+          <label for="d-Ss">Specific storage S<sub>s</sub> [1/L]</label><input id="d-Ss" data-help="Ss" type="number" step="any" min="0" value="0.0001">
+          <label for="d-W">Source/sink W [1/T]</label><input id="d-W" data-help="W" type="number" step="any" value="0">
+          <label for="d-h0">Initial head h<sub>0</sub> [L]</label><input id="d-h0" data-help="h0" type="number" step="any" value="5">
+        </div>
+        <button id="d-create" data-help="createGrid" class="primary">Create grid</button>
+        <div id="d-msg" class="msg"></div>
+        <p class="note">Hover over any input for help, or see the Documentation tab.</p>
+      </div>
+    </section>
+
+    <!-- Editor tab -->
+    <section id="tab-editor" class="tab">
+      <div class="view">
+        <canvas id="ed-canvas"></canvas>
+        <div id="ed-status" class="status">&nbsp;</div>
+      </div>
+      <aside class="controls">
+        <div class="panel">
+          <h3>Display</h3>
+          <div class="form">
+            <label for="ed-field">Field</label>
+            <select id="ed-field" data-help="field">
+              <option value="K">K</option>
+              <option value="logK">log10 K</option>
+              <option value="Ss">Ss</option>
+              <option value="W">W (source/sink)</option>
+              <option value="h0">Initial head h0</option>
+            </select>
+          </div>
+          <label class="chk"><input type="checkbox" id="ed-aspect" data-help="aspect" checked> Equal aspect ratio</label>
+        </div>
+
+        <div class="panel">
+          <h3>Selection</h3>
+          <div id="ed-selinfo" class="info"></div>
+          <div class="btns">
+            <button id="ed-selall" data-help="selection">Select all</button>
+            <button id="ed-selnone" data-help="selection">Clear</button>
+          </div>
+        </div>
+
+        <div class="panel">
+          <h3>Cell properties</h3>
+          <div class="form4">
+            <input type="checkbox" id="ed-useK" data-help="K"><label for="ed-useK">K</label><input id="ed-K" data-help="K" type="number" step="any" value="1"><span class="unit">L/T</span>
+            <input type="checkbox" id="ed-useSs" data-help="Ss"><label for="ed-useSs">Ss</label><input id="ed-Ss" data-help="Ss" type="number" step="any" value="0.0001"><span class="unit">1/L</span>
+            <input type="checkbox" id="ed-useW" data-help="W"><label for="ed-useW">W</label><input id="ed-W" data-help="W" type="number" step="any" value="0"><span class="unit">1/T</span>
+            <input type="checkbox" id="ed-useh0" data-help="h0"><label for="ed-useh0">h0</label><input id="ed-h0" data-help="h0" type="number" step="any" value="5"><span class="unit">L</span>
+          </div>
+          <button id="ed-applycell" data-help="applyCell" class="primary">Apply to selected cells</button>
+          <div id="ed-cellmsg" class="msg"></div>
+        </div>
+
+        <div class="panel">
+          <h3>Boundary condition on selected cells</h3>
+          <div class="form">
+            <label for="ed-bcedge">Edge</label>
+            <select id="ed-bcedge" data-help="bcEdge">
+              <option value="top">Top (z = 0)</option>
+              <option value="bottom">Bottom (z = Lz)</option>
+              <option value="left">Left (x = 0)</option>
+              <option value="right">Right (x = Lx)</option>
+            </select>
+            <label for="ed-bctype">Type</label>
+            <select id="ed-bctype" data-help="bcType">
+              <option value="1">Dirichlet (head)</option>
+              <option value="0">Neumann (flux)</option>
+            </select>
+            <label for="ed-bcval" id="ed-bcvallbl">Head h<sub>b</sub> [L]</label><input id="ed-bcval" data-help="bcValue" type="number" step="any" value="10">
+          </div>
+          <button id="ed-applybc" data-help="applyBC" class="primary">Apply to selected edge cells</button>
+          <div id="ed-bcmsg" class="msg"></div>
+        </div>
+
+        <div class="panel">
+          <h3>Set edge</h3>
+          <div class="form">
+            <label for="ed-seedge">Edge</label>
+            <select id="ed-seedge" data-help="bcEdge">
+              <option value="top">Top (z = 0)</option>
+              <option value="bottom">Bottom (z = Lz)</option>
+              <option value="left">Left (x = 0)</option>
+              <option value="right">Right (x = Lx)</option>
+            </select>
+            <label for="ed-setype">Type</label>
+            <select id="ed-setype" data-help="bcType">
+              <option value="1">Dirichlet (head)</option>
+              <option value="0">Neumann (flux)</option>
+            </select>
+            <label for="ed-seval" id="ed-sevallbl">Head h<sub>b</sub> [L]</label><input id="ed-seval" data-help="bcValue" type="number" step="any" value="10">
+          </div>
+          <button id="ed-setedge" data-help="setEdge" class="primary">Set entire edge</button>
+          <p class="note">Overrides every cell-level boundary condition on that edge.</p>
+          <div id="ed-semsg" class="msg"></div>
+        </div>
+
+        <div class="panel legend">
+          <h3>Boundary legend</h3>
+          <div data-help="bcDirichlet"><span class="swatch" style="background:#d62728"></span>Dirichlet (head)</div>
+          <div data-help="bcNeumann"><span class="swatch" style="background:#1f77b4"></span>Neumann, q &ne; 0</div>
+          <div data-help="bcNeumann"><span class="swatch" style="background:#b0b0b0"></span>Neumann, no flow (q = 0)</div>
+          <p class="note">Drag on the grid to select cells. Start a drag in the coloured boundary band to grab edge cells easily.</p>
+        </div>
+      </aside>
+    </section>
+
+    <!-- Solution tab -->
+    <section id="tab-solution" class="tab">
+      <div class="view">
+        <canvas id="so-canvas"></canvas>
+        <div class="slider-row">
+          <button id="so-play" data-help="play" disabled>Play</button>
+          <input type="range" id="so-slider" data-help="slider" min="0" max="0" value="0" disabled>
+          <span id="so-time" class="time">t = &ndash;</span>
+        </div>
+        <div id="so-status" class="status">&nbsp;</div>
+      </div>
+      <aside class="controls">
+        <div class="panel">
+          <h3>Time stepping</h3>
+          <div class="form">
+            <label for="so-tend">End time [T]</label><input id="so-tend" data-help="tEnd" type="number" step="any" min="0" value="1">
+            <label for="so-nsteps">Number of steps</label><input id="so-nsteps" data-help="nSteps" type="number" step="1" min="1" value="50">
+            <label for="so-method">Time integration</label>
+            <select id="so-method" data-help="method">
+              <option value="implicit">Implicit (BE)</option>
+              <option value="explicit">Explicit (FE)</option>
+            </select>
+          </div>
+          <div id="so-stab" class="msg"></div>
+          <button id="so-run" data-help="run" class="primary">Run solver</button>
+          <div id="so-msg" class="msg">Run the solver to compute h(x, z, t).</div>
+        </div>
+        <div class="panel">
+          <h3>Display</h3>
+          <div class="form">
+            <label for="so-scale">Colour scale</label>
+            <select id="so-scale" data-help="scale">
+              <option value="global">Fixed (all times)</option>
+              <option value="step">Per time step</option>
+            </select>
+          </div>
+          <label class="chk"><input type="checkbox" id="so-aspect" data-help="aspect" checked> Equal aspect ratio</label>
+        </div>
+        <div class="panel">
+          <h3 data-help="probe">Cell probe</h3>
+          <div id="so-probe" class="info">Click a cell in the head plot.</div>
+          <canvas id="so-series"></canvas>
+        </div>
+      </aside>
+    </section>
+
+    <!-- Documentation tab (content generated from app/docs.js) -->
+    <section id="tab-docs" class="tab">
+      <div id="docs-content" class="panel docs"></div>
+    </section>
+  </main>
+
+  <script src="app/model.js"></script>
+  <script src="app/docs.js"></script>
+  <script src="app/solver.js"></script>
+  <script src="app/render.js"></script>
+  <script src="app/ui.js"></script>
+  <script src="app/help.js"></script>
+</body>
+</html>
